@@ -1,0 +1,850 @@
+---
+title: "Data manipulation with dplyr"
+author: "Katherine Tansey"
+date: "June 19, 2018"
+output:
+  ioslides_presentation: 
+    fig_width: 7
+    fig_height: 6
+    fig_caption: true
+    widescreen: true
+    smaller: true
+  beamer_presentation: default
+institute: Data Scientist @ Admiral Group
+email: https://github.com/ktansey
+---
+
+<style>
+ul {
+    color: black;
+}
+
+p {
+    color: black;
+}
+
+.prettyprint .com {
+  /* a comment */
+  color: green;
+  font-style: italic;
+}
+
+.prettyprint .pln {
+  color: black;
+}
+
+.prettyprint .lit {
+  /* a literal value */
+  color: blue;
+}
+
+.prettyprint .str {
+  /* a literal value */
+  color: green;
+}
+
+
+pre {
+  font-family: 'Source Code Pro', 'Courier New', monospace;
+  font-size: 18px;
+  color: black;
+  line-height: 0px;
+  padding: 5px 0 10px 60px;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  width: 106%;
+  left: -60px;
+  position: relative;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  /*overflow: hidden;*/
+}
+</style>
+
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+library(gapminder)
+library(tidyverse)
+```
+
+## Aims of workshop:   
+
+- Learn the main dplyr verbs   
+- Understand how pipes work   
+
+
+## How the practical works?
+
+* Practical is on RStudio cloud : https://rstudio.cloud/project/42122    
+
+* It needs an account, but these are **free!**   
+
+* There is an Rscript and a Rmarkdown file     
+    * Work with whatever one you are most comfortable with      
+
+## The data we are going to be working with             
+
+(@) **gapminder**                    
+    * "An excerpt of the data available at Gapminder.org. For each of 142 countries, the package provides values for life expectancy, GDP per capita, and population, every five years, from 1952 to 2007."        
+    * For more information : https://www.gapminder.org/    
+(@) **msleep**      
+    * Sleep times and weights for mammals               
+    * For more information: V. M. Savage and G. B. West. A quantitative, theoretical framework for understanding mammalian sleep. Proceedings of the National Academy of Sciences, 104 (3):1051-1056, 2007.   
+  
+
+## Why dplyr? 
+
+* It's fast
+* Simple clear syntax
+* Chain commands together
+* Connects with external databases
+
+
+## Tidy Data
+
+```{r, out.width = "800px", echo = FALSE}
+knitr::include_graphics("beginnersR-master/pictures/tidy.png")
+```
+
+* What is "tidy" data?                  
+    * Observations as rows              
+    * Variables as columns                  
+    * One type of observational unit per table              
+    * Each value belongs to a variable and an observation              
+    * Column headers are variable names not variables                    
+
+## Understanding the structure of your data    
+
+* Various functions exist to look at the data and give you basic information about it.
+    - head(*df*) $\rightarrow$ prints to screen first few rows of data
+    - tail(*df*) $\rightarrow$ prints to screen last few rows of data
+    - class(*df*) $\rightarrow$  class of data
+    - dim(*df*) $\rightarrow$  how many rows and columns
+    - colnames(*df*) $\rightarrow$  column names
+    - str(*df*) $\rightarrow$  data preview, and column data types
+    - summary(*df*) $\rightarrow$ summary of data
+
+* *df* == the name of your dataframe
+
+## Let's look at gapminder {.smaller} 
+
+```{r}
+head(gapminder, n = 2)
+```
+
+```{r}
+str(gapminder)
+```
+
+```{r}
+dim(gapminder)
+```
+
+
+## Let's a look at the practical
+
+# dplyr
+
+## dplyr 'verbs'
+
+* 6 main "verbs" in dplyr
+    - **filter()** $\rightarrow$ return rows with matching conditions
+    - **select()** $\rightarrow$  select variables by name
+    - **mutate()** $\rightarrow$  create new variables
+    - **group_by()** $\rightarrow$  return grouping variables
+    - **summarise()** $\rightarrow$  reduces multiple values down to a single value
+    - **arrange()** $\rightarrow$  arrange rows by variables
+
+## **filter()** $\rightarrow$ filter rows
+
+* Use filter to keep or remove certain rows from a data set. 
+* Use conditionals to keep only the rows that match the criteria.
+
+```{r, eval = FALSE, warning = FALSE}
+# single filter 
+filter(gapminder, year == 1997)
+```
+
+```{r, out.width = "600px", echo = FALSE, fig.align="center"}
+knitr::include_graphics("beginnersR-master/pictures/filter.png")
+```
+
+## **filter()** $\rightarrow$ Strings
+
+Strings are characters/words/letters     
+
+Strings need to be in quotes    
+
+```{r, warning=FALSE}
+filter(gapminder, 
+       country == "United Kingdom")
+```
+
+
+## **filter()** $\rightarrow$  Relational operations
+
+
+
+Relational Operations |	Outputs TRUE or FALSE based on the validity of the statement.
+----------------------|-----------------------------------------------------------------
+a == b                |	a is equal to b
+a != b	              | a is not equal to b
+a > b	                | a is greater than b
+a < b	                | a is less than b
+a >= b	              | a is greater than or equal to b
+a <= b	              | a is less than or equal to b
+a %in% b              | a is an element in b
+
+
+Table from http://stat545.com/cm005-notes_and_exercises.html
+
+## **filter()** $\rightarrow$ %in%
+
+**%in%** - value match
+    - Does this exist in that
+
+Filter year to only keep those that are either 1977 or 1997   
+
+```{r, warning=FALSE}
+filter(gapminder, 
+       year %in% c(1977, 1997))
+```
+
+
+## **filter()** $\rightarrow$ Multiple filters {.increment}
+  
+Multiple filters may be separated by a **, (comma)** 
+
+dplyr interprets the **, (comma)** to be **& (and) **    
+
+```{r, warning=FALSE}
+filter(gapminder, 
+          year == 1997, lifeExp > 78) 
+```
+
+
+## **filter()** $\rightarrow$  Relational operations 
+
+Logical Operations | Outputs TRUE or FALSE based on the validity of the statement.
+-------------------|-----------------------------------------------------------------
+a & b, a && b      |	Both a and b are TRUE
+a | b, a || b	     | Either a or b is TRUE.
+!a	               | a is not TRUE (take everything else but a)
+xor(a, b)	         | Either a or b is TRUE, but not both.
+all(a,b,c,...)	   | a, b, c, . are all TRUE.
+any(a,b,c,...)	   | Any one of a, b, c, . is TRUE.
+
+
+Table from http://stat545.com/cm005-notes_and_exercises.html
+
+## **filter()** $\rightarrow$ OR
+
+Keep a row if either criteria is met     
+
+```{r, warning=FALSE}
+filter(gapminder, 
+       pop > 350000000 | lifeExp > 80)
+```
+
+
+## **filter()** $\rightarrow$ **between()**
+
+**between()** can be used to find observations between a range.  
+
+Instead of writing this:
+```{r, eval = FALSE, warning=FALSE}
+filter(gapminder, 
+       year >= 1977 | year <= 1997)
+```
+
+We can do this
+```{r, warning=FALSE}
+filter(gapminder, 
+       between(year, 1977, 1997) )
+```
+
+
+
+## **filter()** $\rightarrow$  Be careful on order!
+
+R will run the **&** before the **|**
+
+Keep only rows where country is Canada or France and the year is 1982 
+
+```{r, warning=FALSE}
+filter(gapminder, 
+       country == 'Canada' | country == 'France' & year == 1982 )
+```
+
+
+## **filter()** $\rightarrow$ Be careful on order!
+
+R will run the **&** before the **|**
+
+Keep only rows where country is Canada or France and the year is 1982 
+
+```{r, warning=FALSE}
+filter(gapminder, 
+       (country == 'Canada' | country == 'France') & year == 1982)
+```
+
+
+## **filter()** $\rightarrow$ Remove Missing Data
+
+Use **!is.na()** to filter out missing data    
+
+```{r}
+head(msleep, n = 2)
+```
+
+
+```{r}
+filter(msleep, 
+       !is.na(conservation))
+```
+
+## Let's try filter()
+
+```{r, eval = FALSE}
+# single filter 
+filter(gapminder, year == 1997)
+
+filter(gapminder, continent == "Asia")
+
+ # multiple filters 
+filter(gapminder, year == 1997 & gdpPercap > 1000) 
+
+filter(gapminder, year %in% c(1977, 1997)) 
+```
+  
+* Column names must match **EXACTLY** to the dataframe            
+* Observations that are strings (characters/words) need quotes            
+* R is case sensitive!              
+
+
+## **select()** $\rightarrow$ select columns  
+
+Use select to keep or remove certain columns from a data sets.
+
+```{r, eval = FALSE, warning=FALSE}
+select(gapminder, country, year, lifeExp)
+```
+
+```{r, out.width = "600px", echo = FALSE, fig.align="center"}
+knitr::include_graphics("beginnersR-master/pictures/select.png")
+```
+
+
+## **select()** $\rightarrow$ select columns vectorized
+
+Select all columns from country to life expectancy (lifeExp) 
+
+```{r, warning=FALSE}
+select(gapminder, country:lifeExp)  
+```
+
+## **select()** $\rightarrow$ not select a column
+
+Select all columns BUT country   
+    
+Using **-** to not select a specific column      
+    
+Can also be vectorized or used with helper functions    
+
+```{r, warning=FALSE}
+select(gapminder, -country) 
+```
+
+## **select()** $\rightarrow$ Helper Functions
+ 
+* Make it easier to select multiple columns         
+    - starts_with("Hap") $\rightarrow$ ALL column names that start with *Hap*             
+    - ends_with("ppy") $\rightarrow$ ALL column names that end with *ppy*         
+    - contains("app") $\rightarrow$ ALL column names that contain *app*              
+    - matches("^(SNP|CHR)_") $\rightarrow$ ALL column names that match a regular expression           
+    - num_range("x", 1980:1983) $\rightarrow$ ALL column names x1980, x1981, x1982, and x1983           
+    - one_of(character_vector) $\rightarrow$ ALL column names that appear in character_vector           
+
+## **select()** $\rightarrow$ Helper Functions - Example
+ 
+Select all columns that start with sleep    
+ 
+```{r, warning=FALSE}
+select(msleep, starts_with("sleep"))
+```
+
+## **select()** $\rightarrow$ Helper Functions - **one_of()**
+
+Allows you to create a character vector of column names and use it to select columns from dataframe    
+
+```{r, warning=FALSE}
+to_keep <- c('country', 'lifeExp', 'gdpPercap')
+
+select(gapminder, one_of(to_keep))
+```
+ 
+## **select()** $\rightarrow$ Change column names
+
+- 2 different methods with different outcome:            
+    - using **select()** $\rightarrow$ only keeps columns listed in select statement        
+    - using **rename()** $\rightarrow$ keep all columns         
+    
+```{r, warning=FALSE}
+select(gapminder, Life_Expectancy = lifeExp)
+```
+
+ 
+## **select()** $\rightarrow$ Change column names
+
+- 2 different methods with different outcome:           
+    - using **select()** $\rightarrow$ only keeps columns listed in select statement           
+    - using **rename()** $\rightarrow$ keep all columns         
+    
+```{r, warning=FALSE}
+rename(gapminder, Life_Expectancy = lifeExp)
+```
+
+## Let's try select()
+
+```{r, eval = FALSE, warning=FALSE}
+select(gapminder, country, year, lifeExp)
+
+# vectorized 
+select(gapminder, country:year)  
+# select all columns from country to year 
+
+# Not select a column 
+select(gapminder, -country) 
+ # select all columns BUT country 
+
+select(gapminder, contains("co"))
+```
+
+* Column names must match **EXACTLY** to the dataframe            
+* Observations that are strings (characters/words) need quotes            
+* R is case sensitive!   
+
+
+## Introducing the pipe  **%>%**
+
+* Commands in dplyr can be piped together     
+    * Saves on writing coding and intermediate steps      
+    
+```{r, eval = FALSE}
+# multiple steps with intermediate dataframes created
+new_df <-  filter(gapminder, year == 1997) 
+select(new_df, -year) 
+
+# nested commands
+select(
+  filter(gapminder, 
+         year == 1997), 
+  -year)
+
+# using a pipe %>%
+gapminder %>%
+  filter(year == 1997) %>%
+  select(-year)   
+```
+
+The pipe **%>%** takes the output from the previous command as the input the next command    
+ 
+ 
+## pipe **%>%**
+
+Input data information for each command is now missing
+
+The input is the output of the function above!   
+
+subsequent "piped" commands are indented - makes code easier to read
+
+```{r, warning=FALSE}
+gapminder %>%
+  filter(year == 1997) %>%
+  select(-year)   
+```
+
+## pipe **%>%**
+
+* When to not use a pipe:       
+    * Multiple inputs or outputs             
+        * Pipes should focus on one clear task for one object          
+    * More than 10 steps          
+    * If you need a circular step           
+        * Pipes are linear, they don't loop back round!         
+
+
+## Let's try the pipe **%>%**
+
+```{r, eval = FALSE}
+gapminder %>%
+  filter(year == 1997) %>%
+  select(-year)   
+```
+
+* With *%>%*, there is no more input data information for each command         
+* Indentation makes it easier to follow the trail of commands within the **pipe**          
+* Column names must match **EXACTLY** to the dataframe            
+* Observations that are strings (characters/words) need quotes            
+* R is case sensitive!   
+
+## **mutate()** $\rightarrow$ Mutate existing columns to make new columns    
+
+*gdp_billion*  is the **name** of the newly created variable     
+
+*= gdpPercap\*pop/10^9*  is the equation to make the new variable   
+
+```{r, eval = FALSE, warning=FALSE}
+mutate(gapminder, gdp_billion = gdpPercap*pop/10^9) 
+```
+
+```{r, out.width = "600px", echo = FALSE, fig.align="center"}
+knitr::include_graphics("beginnersR-master/pictures/mutate.png")
+```
+
+## **mutate()** $\rightarrow$ if you don't set a name   
+
+There is no column name set for the new variable - **defaults to the equation**      
+    
+*= gdpPercap\*pop/10^9* is the equation to make the new variable   
+
+```{r, warning=FALSE}
+mutate(gapminder, gdpPercap*pop/10^9) 
+```
+
+*Make sure you set column names when using **mutate()***
+
+## **mutate()** $\rightarrow$ Multiple columns    
+
+Each new column is separated by a **, (comma)**    
+
+```{r, warning=FALSE}
+mutate(gapminder, 
+       gdp_billion = gdpPercap*pop/10^9, 
+       life_years = lifeExp * pop, 
+       life_gdp = life_years / gdp_billion) 
+```
+
+Can use newly created variables **IMMEDIATELY!!**    
+
+
+## Let's try **mutate()**
+
+```{r, eval = FALSE}
+# single variables
+mutate(gapminder, gdp_billion = gdpPercap*pop/10^9) 
+
+# multiple variables 
+mutate(gapminder, 
+       gdp_billion = gdpPercap*pop/10^9, 
+       life_years = lifeExp * pop, 
+       life_gdp = life_years / gdp_billion) 
+```
+
+* Name your new columns for **mutate()**!       
+* With *%>%*, there is no more input data information for each command         
+* Indentation makes it easier to follow the trail of commands within the **pipe**        
+* Column names must match **EXACTLY** to the dataframe            
+* Observations that are strings (characters/words) need quotes            
+* R is case sensitive!    
+
+Practical will build on previous verbs and the pipe!
+
+## **arrange()** $\rightarrow$ sort rows
+
+Single parameter ascending arrange 
+```{r, eval = FALSE, warning=FALSE}
+# ascending sort
+arrange(gapminder, lifeExp)
+
+# descending sort
+arrange(gapminder, desc(lifeExp)) 
+```
+
+```{r, out.width = "1000px", echo = FALSE, fig.align="center"}
+knitr::include_graphics("beginnersR-master/pictures/arrange.png")
+```
+
+## **arrange()** $\rightarrow$ Multiple parameters
+
+* In a multiple parameter arrange, **the order is *important!***    
+
+```{r, warning=FALSE}
+arrange(gapminder, desc(lifeExp), pop) 
+```
+
+* In the example above, the gapminder data is: 
+    - First sorted by descending life expectancy (*desc(lifeExp)*)    
+    - Any ties broken by ascending population (*pop*)   
+
+## Let's try **arrange()**
+
+```{r, eval = FALSE}
+# single parameter ascending arrange 
+arrange(gapminder, lifeExp)
+
+ # single parameter descending arrange 
+arrange(gapminder, desc(lifeExp)) 
+
+# multiple parameter arrange 
+arrange(gapminder, desc(lifeExp), pop) 
+```
+
+* Name your new columns for **mutate()**!       
+* With *%>%*, there is no more input data information for each command         
+* Indentation makes it easier to follow the trail of commands within the **pipe**          
+* Column names must match **EXACTLY** to the dataframe            
+* Observations that are strings (characters/words) need quotes            
+* R is case sensitive!   
+
+Practical will build on previous verbs and the pipe!
+
+## **group_by()** $\rightarrow$ Group by factor/category   
+
+Group together rows of data by some factor within the dataset.    
+
+Alone, it is hard to see what this command is doing
+
+**BUT** it is *INCREDIBLY* useful and *VERY* powerful
+
+```{r, warning=FALSE}
+group_by(gapminder, continent)
+```
+
+## **group_by()** $\rightarrow$ Group by factor/category   
+
+Once a dataset is grouped, dplyr performs all operations on that group   
+
+Its like each group has become its own dataset      
+    
+```{r, out.width = "600px", echo = FALSE, fig.align="center"}
+knitr::include_graphics("beginnersR-master/pictures/group_by_swc.png")
+```
+
+Image taken from Software Carpentry Foundation (https://software-carpentry.org/)    
+
+## **group_by()** $\rightarrow$ Multiple variables   
+
+Each column that you want to group by is listed separated by a **, (comma)**  
+
+**Order is important!**
+
+Below will first group by *country* and then *continent* 
+
+```{r, warning=FALSE}
+group_by(gapminder, country, continent)
+```
+
+## **summarise()** $\rightarrow$ Create summary statistics 
+
+**summarize()** also works
+
+```{r, warning=FALSE}
+# get mean of life expectancy 
+summarise(gapminder, mean_lifexp = mean(lifeExp))
+```
+
+**summarise()** returns a dataframe        
+
+* Need to name new columns     
+    * **mean_lifexp** is the column name    
+    * *mean(lifeExp)* is what populates the column   
+    * Exact same idea as with **mutate()**
+
+## **summarise()** $\rightarrow$ Multiple outputs  
+
+**summarize()** also works
+
+Each summary statistic is separated by a **, (comma)**    
+
+```{r, warning=FALSE}
+# get mean of life expectancy and mean of GDP 
+summarise(gapminder, 
+          mean_lifexp = mean(lifeExp), 
+          mean_gdp = mean(gdpPercap))
+```
+
+## **summarise()** $\rightarrow$ options
+
+These are not the only functions that work with **summarise()**    
+
+Function | Description
+---------|----------------------------
+min()    | minimum
+max()    | maximum
+sum()    | sum
+range()  | range
+mean()   | mean 
+median() | median
+sd()     | standard deviation
+var()    | variance 
+
+See http://www.statmethods.net/management/functions.html for more information/options         
+
+
+## **summarise()** $\rightarrow$ **n()** and **n_distinct()**    
+
+**n()** counts number of observations    
+
+**n_distinct()** counts the number of distinct observation for that column    
+
+```{r, warning=FALSE}
+gapminder %>% 
+  summarise(n = n(), 
+            n_distinct = n_distinct(country)) 
+```
+
+
+## **group_by()** & **summarise()**
+
+Using **group_by()** with **summarise()** returns the summary statistic for each member of the group   
+```{r, warning=FALSE}
+gapminder %>% 
+    group_by(continent) %>% 
+    summarise(mean_lifeExp = mean(lifeExp), 
+                median_gdp = median(gdpPercap)) 
+```
+
+## **group_by()** & **summarise()**
+
+* Because the dataset is grouped, dplyr performs **summarise()** on each group separately       
+    * like each group has become its own dataset      
+    
+```{r, out.width = "600px", echo = FALSE, fig.align="center"}
+knitr::include_graphics("beginnersR-master/pictures/group_by_summarise_swc.png")
+```
+
+Image taken from Software Carpentry Foundation (https://software-carpentry.org/)    
+
+
+## **group_by()** & **summarise()** $\rightarrow$ **n()** and **n_distinct()**    
+
+**n()** counts number of observations    
+
+**n_distinct()** counts the number of distinct observation for that column    
+
+```{r, warning=FALSE}
+gapminder %>% 
+  group_by(continent) %>%
+  summarise(n = n(), 
+            n_distinct = n_distinct(country)) 
+```
+
+
+## **group_by()** &  **add_tally()**  
+
+get number of observations for each group - while keeping the entire original dataframe  
+    
+Use to subset for duplicates, minimum/maximum occurrences, etc. 
+
+```{r, warning = FALSE}
+gapminder %>%
+  group_by(country) %>%
+  add_tally()
+```
+
+
+## **group_by()** & **filter()**
+
+**group_by()** comes in handy for more than just **summarise()**     
+
+Combine **group_by()** and **filter()** to filter the data by groups    
+
+```{r, warning = FALSE}
+gapminder %>% 
+  group_by(continent) %>%
+  filter(lifeExp == max(lifeExp) | pop == min(pop)) 
+```
+
+## **group_by()** & **filter()** with **row_number()**
+
+Say I want the first and last occurrence of each group sprted by some element    
+
+**row_number()** returns the row that you specify   
+**n()** refers to the total number of observations - *can be different for each group!*      
+    
+```{r, warning = FALSE}
+gapminder %>% 
+  group_by(country) %>%
+  arrange(year) %>%
+  filter(row_number() == 1 | row_number() == n() )  %>%
+  arrange(country)
+```
+
+## **ungroup()**
+
+Grouped dataframes remained grouped   
+
+Explicitly need to **ungroup()** the data
+
+```{r, warning = FALSE}
+gap <- gapminder %>%
+  group_by(continent) %>%
+  filter(lifeExp == max(lifeExp) | pop == min(pop))
+
+summarise(gap, mean_gdpPercap = mean(gdpPercap))
+```
+ 
+## **ungroup()**
+
+Grouped dataframes remained grouped    
+
+Explicitly need to **ungroup()** the data
+
+```{r, warning = FALSE}
+gap <- gapminder %>%
+  group_by(continent) %>%
+  filter(lifeExp == max(lifeExp) | pop == min(pop)) %>%
+  ungroup()
+
+summarise(gap, mean_gdpPercap = mean(gdpPercap))
+```
+
+
+## Let's try **group_by()** & **summarise()**    
+
+```{r, eval = FALSE}
+gapminder %>% 
+    group_by(continent) %>% 
+    summarise(mean_lifeExp = mean(lifeExp),
+              median_gdp = median(gdpPercap)) 
+```
+
+* Name your new columns for **mutate()** & **summarise()**!       
+* With *%>%*, there is no more input data information for each command         
+* Indentation makes it easier to follow the trail of commands within the **pipe**        
+* Column names must match **EXACTLY** to the dataframe            
+* Observations that are strings (characters/words) need quotes            
+* R is case sensitive!   
+
+Practical will build on previous verbs and the pipe!
+
+## Summary
+
+Syntax for dplyr is more user friendly than base R  
+
+
+Start asking complex questions within a few lines of code    
+
+ 
+
+## Citations
+
+http://r4ds.had.co.nz/
+
+https://software-carpentry.org/
+
+https://4va.github.io/biodatasci/index.html
+
+http://bioconnector.org/index.html
+
+https://suzan.rbind.io/
+
+http://kbroman.org/
+
+https://github.com/datasciencelabs
+
+
+## THANK YOU
